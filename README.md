@@ -9,7 +9,7 @@
 
 ---
 
-
+![](img/ssibench.svg)
 
 Skip to...
 
