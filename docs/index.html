@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>SSIBench: a Self-Supervised Imaging Benchmark</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="3">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#how-to" id="toc-how-to" class="nav-link" data-scroll-target="#how-to">How to…</a>
+  <ul class="collapse">
+  <li><a href="#how-to-use-the-benchmark" id="toc-how-to-use-the-benchmark" class="nav-link" data-scroll-target="#how-to-use-the-benchmark">How to use the benchmark</a></li>
+  <li><a href="#how-to-contribute-a-method" id="toc-how-to-contribute-a-method" class="nav-link" data-scroll-target="#how-to-contribute-a-method">How to contribute a method</a></li>
+  <li><a href="#how-to-use-a-custom-dataset" id="toc-how-to-use-a-custom-dataset" class="nav-link" data-scroll-target="#how-to-use-a-custom-dataset">How to use a custom dataset</a></li>
+  <li><a href="#how-to-use-a-custom-model" id="toc-how-to-use-a-custom-model" class="nav-link" data-scroll-target="#how-to-use-a-custom-model">How to use a custom model</a></li>
+  <li><a href="#how-to-use-a-custom-forward-operatoracquisition-strategy" id="toc-how-to-use-a-custom-forward-operatoracquisition-strategy" class="nav-link" data-scroll-target="#how-to-use-a-custom-forward-operatoracquisition-strategy">How to use a custom forward operator/acquisition strategy</a></li>
+  <li><a href="#how-to-use-a-custom-metric" id="toc-how-to-use-a-custom-metric" class="nav-link" data-scroll-target="#how-to-use-a-custom-metric">How to use a custom metric</a></li>
+  </ul></li>
+  <li><a href="#live-leaderboard" id="toc-live-leaderboard" class="nav-link" data-scroll-target="#live-leaderboard">Live leaderboard</a></li>
+  <li><a href="#training-script-step-by-step" id="toc-training-script-step-by-step" class="nav-link" data-scroll-target="#training-script-step-by-step">Training script step-by-step</a></li>
+  <li><a href="#dataset-preparation-instructions" id="toc-dataset-preparation-instructions" class="nav-link" data-scroll-target="#dataset-preparation-instructions">Dataset preparation instructions</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">SSIBench: Benchmarking Self-Supervised Learning Methods for Accelerated MRI Reconstruction</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<blockquote class="blockquote">
+<p>SSIBench is a modular benchmark for learning to solve imaging inverse problems without ground truth, applied to accelerated MRI reconstruction.</p>
+</blockquote>
+<p><strong>Anonymous authors</strong>.</p>
+<p><a href="https://github.com/anonymous-kangaroo/ssibench"><img src="https://img.shields.io/badge/GitHub-Code-blue.svg" class="img-fluid" alt="Code"></a> <a href="https://anonymous-kangaroo.github.io/ssibench"><img src="https://img.shields.io/badge/Web-Benchmark-ff69b4.svg" class="img-fluid" alt="Benchmark"></a></p>
+<hr>
+<p><img src="img/ssibench.svg" class="img-fluid"></p>
+<p>Skip to…</p>
+<ol type="1">
+<li><a href="#overview">Overview</a></li>
+<li><a href="#how-to">How to…</a>
+<ol type="a">
+<li><a href="#how-to-use-the-benchmark">…use the benchmark</a><br>
+</li>
+<li><a href="#how-to-contribute-a-method">…contribute a method</a><br>
+</li>
+<li><a href="#how-to-use-a-custom-dataset">…use a custom dataset</a>, <a href="#how-to-use-a-custom-model">model</a>, <a href="#how-to-use-a-custom-forward-operatoracquisition-strategy">forward operator/acquisition strategy</a>, <a href="#how-to-use-a-custom-metric">metric</a><br>
+</li>
+</ol></li>
+<li><a href="#live-leaderboard">Live leaderboard</a></li>
+<li><a href="#training-script-step-by-step">Training script step-by-step</a></li>
+<li><a href="#dataset-preparation-instructions">Dataset preparation instructions</a></li>
+</ol>
+<hr>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>SSIBench is a modular benchmark for learning to solve imaging inverse problems without ground truth, applied to accelerated MRI reconstruction. We contribute:</p>
+<ol type="1">
+<li>A comprehensive review of state-of-the-art self-supervised feedforward methods for inverse problems;</li>
+<li>Well-documented implementations of all benchmarked methods in the open-source <a href="https://deepinv.github.io/">DeepInverse</a> library, and a modular <a href="https://anonymous-kangaroo.github.io/ssibench">benchmark site</a> enabling ML researchers to evaluate new methods or on custom setups and datasets;</li>
+<li>Benchmarking experiments on MRI, on a standardised setup across multiple realistic, general scenarios;</li>
+<li>A new method, multi-operator equivariant imaging (MO-EI).</li>
+</ol>
+<hr>
+</section>
+<section id="how-to" class="level2">
+<h2 class="anchored" data-anchor-id="how-to">How to…</h2>
+<section id="how-to-use-the-benchmark" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-the-benchmark">How to use the benchmark</h3>
+<p>First setup your environment:</p>
+<ol type="1">
+<li>Create a python environment:</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">-m</span> venv venv</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> venv/Scripts/activate</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Clone the benchmark repo:</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/anonymous-kangaroo/ssibench.git</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="3" type="1">
+<li>Install <a href="https://deepinv.github.io/">DeepInverse</a></li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install deepinv   <span class="co"># Stable</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install git+https://github.com/deepinv/deepinv.git#egg=deepinv   <span class="co"># Nightly</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="4" type="1">
+<li>Prepare your <a href="https://fastmri.med.nyu.edu/">fastMRI</a> data using the <a href="#dataset-preparation-instructions">below instructions</a>.</li>
+</ol>
+<p>Then run <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> for your chosen loss, where <code>--loss</code> is the loss function (<code>mc</code>, <code>ei</code> etc.), and <code>--physics</code> is the physics (see <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> for options):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> train.py <span class="at">--loss</span> ... <span class="at">--physics</span> ...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To evaluate, use the same script <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> with 0 epochs and loading a checkpoint. We provide one pretrained model for quick eval (<a href="https://huggingface.co/Andrewwango/ssibench/blob/main/demo_mo-ei.pth.tar">download here</a>):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> train.py <span class="at">--epochs</span> 0 <span class="at">--ckpt</span> <span class="st">"demo_mo-ei.pth.tar"</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Notation: in our benchmark, we compare the <code>loss</code> functions <span class="math inline">\(\mathcal{L}(\ldots)\)</span>, while keeping constant the <code>model</code> <span class="math inline">\(f_\theta\)</span>, forward operator <code>physics</code> <span class="math inline">\(A\)</span>, and data <span class="math inline">\(y\)</span>.</p>
+</section>
+<section id="how-to-contribute-a-method" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-contribute-a-method">How to contribute a method</h3>
+<ol type="1">
+<li>Add the code for your loss in the format:</li>
+</ol>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> YourOwnLoss(deepinv.loss.Loss):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>, </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        x_net: torch.Tensor,    <span class="co"># Reconstruction i.e. model output</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        y: torch.Tensor,        <span class="co"># Measurement data e.g. k-space in MRI</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        model: deepinv.models.Reconstructor, <span class="co"># Reconstruction model $f_\theta$</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        physics: deepinv.physics.Physics,    <span class="co"># Forward operator physics $A$</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        x: torch.Tensor <span class="op">=</span> <span class="va">None</span>, <span class="co"># Ground truth, must be unused!</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">**</span>kwargs</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    ):</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        loss_calc <span class="op">=</span> ...</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> loss_calc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Add your loss function as an option in <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> (hint: search <em>“Add your custom loss here!”</em>)</li>
+<li>Benchmark your method by running <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> (hint: <a href="#how-to-use-the-benchmark"><em>“How to use the benchmark”</em></a>).</li>
+<li>Submit your results by editing the <a href="#live-leaderboard">live leaderboard</a>.</li>
+<li>Open a <a href="https://github.com/anonymous-kangaroo/ssibench/pulls">GitHub pull request</a> to contribute your loss! (hint: <a href="https://github.com/anonymous-kangaroo/ssibench/pull/1">see example here</a>; hint: <a href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request">how to open a PR in GitHub</a>)</li>
+</ol>
+</section>
+<section id="how-to-use-a-custom-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-a-custom-dataset">How to use a custom dataset</h3>
+<p>Our modular benchmark lets you easily train and evaluate the benchmarked methods on your own setup.</p>
+<ol type="1">
+<li>The custom dataset should have the form (see <a href="https://deepinv.github.io/deepinv/api/stubs/deepinv.Trainer.html#deepinv.Trainer:~:text=of%20the%20following-,options,-%3A">DeepInverse docs</a> for details):</li>
+</ol>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> YourOwnDataset(torch.utils.data.Dataset):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, idx: <span class="bu">int</span>):</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        ...</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="co"># y = measurement data</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        <span class="co"># params = dict of physics data-dependent parameters, e.g. acceleration mask in MRI</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span>     x,     y, params <span class="co"># If ground truth x provided for evaluation</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.nan, y, params <span class="co"># If ground truth does not exist</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Replace <code>dataset = ...</code> in <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> with your own, then train/evaluate using the script as in <a href="#how-to-use-the-benchmark">How to use the benchmark</a>.</li>
+</ol>
+</section>
+<section id="how-to-use-a-custom-model" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-a-custom-model">How to use a custom model</h3>
+<ol type="1">
+<li>The custom model should have the form (see <a href="https://deepinv.github.io/deepinv/user_guide/reconstruction/introduction.html">DeepInverse guide</a> for details):</li>
+</ol>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> YourOwnModel(deepinv.models.Reconstructor):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>, </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        y: torch.Tensor,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        physics: deepinv.physics.Physics,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">**</span>kwargs</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    ):</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        x_net <span class="op">=</span> ...</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x_net</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Replace <code>model = ...</code> in <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> with your own, then train/evaluate using the script as in <a href="#how-to-use-the-benchmark">How to use the benchmark</a>.</li>
+</ol>
+</section>
+<section id="how-to-use-a-custom-forward-operatoracquisition-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-a-custom-forward-operatoracquisition-strategy">How to use a custom forward operator/acquisition strategy</h3>
+<ol type="1">
+<li>To use an alternative physics, you can use a different off-the-shelf <a href="https://deepinv.github.io/deepinv/user_guide/physics/physics.html">DeepInverse physics</a> or a custom one of the form (see <a href="https://deepinv.github.io/deepinv/user_guide/physics/defining.html">DeepInverse guide</a> on creating custom physics):</li>
+</ol>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> YourOwnPhysics(deepinv.physics.Physics):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> A(<span class="va">self</span>, x: torch.Tensor, <span class="op">**</span>kwargs):</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> ...</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> y</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> A_adjoint(<span class="va">self</span>, y: torch.Tensor, <span class="op">**</span>kwargs):</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        x_hat <span class="op">=</span> ...</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x_hat</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Replace <code>physics = ...</code> <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> with your own, then train/evaluate using the script as in <a href="#how-to-use-the-benchmark">How to use the benchmark</a>.</li>
+</ol>
+</section>
+<section id="how-to-use-a-custom-metric" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-use-a-custom-metric">How to use a custom metric</h3>
+<ol type="1">
+<li>The custom metric should have the form (see <a href="https://deepinv.github.io/deepinv/user_guide/training/metric.html">DeepInverse docs</a> for details):</li>
+</ol>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> YourOwnMetric(deepinv.loss.metric.Metric):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> metric(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>, </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        x_net: torch.Tensor, <span class="co"># Reconstruction i.e. model output</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        x: torch.Tensor,     <span class="co"># Ground-truth for evaluation</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    ):</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> ...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<ol start="2" type="1">
+<li>Replace <code>metrics = ...</code> in <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> with your own, then train/evaluate using the script as in <a href="#how-to-use-the-benchmark">How to use the benchmark</a>.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="live-leaderboard" class="level2">
+<h2 class="anchored" data-anchor-id="live-leaderboard">Live leaderboard</h2>
+<p>We provide a live leaderboard for each experimental scenario described in <a href="https://arxiv.org/abs/2502.14009">the paper</a>. Got a new method? <a href="#how-to-contribute-a-method">Contribute it</a> to the leaderboard!</p>
+<details>
+<summary>
+Scenario 1 (single-coil)
+</summary>
+<table class="table">
+<thead>
+<tr class="header">
+<th>#</th>
+<th><strong>Loss</strong></th>
+<th><strong>PSNR</strong></th>
+<th><strong>SSIM</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>UAIR</td>
+<td>14.00</td>
+<td>.3715</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Adversarial</td>
+<td>18.52</td>
+<td>.4732</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>MC</td>
+<td>27.66</td>
+<td>.7861</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Zero-filled</td>
+<td>27.67</td>
+<td>.7862</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>VORTEX</td>
+<td>27.75</td>
+<td>.7898</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>SSDU</td>
+<td>27.98</td>
+<td>.7485</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>Noise2Inverse</td>
+<td>28.42</td>
+<td>.7853</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Weighted-SSDU</td>
+<td>29.93</td>
+<td>.8355</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>EI</td>
+<td>30.26</td>
+<td>.8523</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>MOI</td>
+<td>30.29</td>
+<td>.8651</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>MOC-SSDU</td>
+<td>30.42</td>
+<td>.8198</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>SSDU-Consistency</td>
+<td>30.81</td>
+<td>.8495</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>MO-EI</td>
+<td>32.14</td>
+<td>.8846</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>(Supervised)</td>
+<td>33.15</td>
+<td>.9032</td>
+</tr>
+</tbody>
+</table>
+<p><img src="img/results_brain.png" class="img-fluid"></p>
+</details>
+<details>
+<summary>
+Scenario 2 (noisy)
+</summary>
+<table class="table">
+<thead>
+<tr class="header">
+<th>#</th>
+<th><strong>Loss</strong></th>
+<th><strong>PSNR</strong></th>
+<th><strong>SSIM</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Zero-filled</td>
+<td>24.34</td>
+<td>.4428</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>(Non-robust) Weighted-SSDU</td>
+<td>25.91</td>
+<td>.5477</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>(Non-robust) MO-EI</td>
+<td>26.12</td>
+<td>.6002</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>ENSURE</td>
+<td>26.29</td>
+<td>.5856</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Robust-SSDU</td>
+<td>27.42</td>
+<td>.6159</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Noise2Recon-SSDU</td>
+<td>27.84</td>
+<td>.7661</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>Robust-EI</td>
+<td>29.07</td>
+<td>.8227</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Robust-MO-EI</td>
+<td>29.72</td>
+<td>.8409</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>(Supervised)</td>
+<td>30.19</td>
+<td>.8411</td>
+</tr>
+</tbody>
+</table>
+<p><img src="img/results_brain_noisy.png" class="img-fluid"></p>
+</details>
+<details>
+<summary>
+Scenario 3 (single-operator)
+</summary>
+<table class="table">
+<thead>
+<tr class="header">
+<th>#</th>
+<th><strong>Loss</strong></th>
+<th><strong>PSNR</strong></th>
+<th><strong>SSIM</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>UAIR</td>
+<td>18.44</td>
+<td>.5388</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>SSDU</td>
+<td>21.89</td>
+<td>.6288</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Noise2Inverse</td>
+<td>24.63</td>
+<td>.6559</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Adversarial</td>
+<td>26.53</td>
+<td>.7013</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>MOC-SSDU</td>
+<td>27.85</td>
+<td>.7717</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Zero-filled</td>
+<td>28.02</td>
+<td>.7900</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>MC</td>
+<td>28.02</td>
+<td>.7900</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>VORTEX</td>
+<td>28.07</td>
+<td>.7916</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>Weighted-SSDU</td>
+<td>30.14</td>
+<td>.8454</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>SSDU-Consistency</td>
+<td>31.05</td>
+<td>.8614</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>MO-EI</td>
+<td>31.11</td>
+<td>.8713</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>MOI</td>
+<td>31.60</td>
+<td>.8789</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>EI</td>
+<td>31.99</td>
+<td>.8806</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>(Supervised)</td>
+<td>34.03</td>
+<td>.9040</td>
+</tr>
+</tbody>
+</table>
+<p><img src="img/results_brain_single.png" class="img-fluid"></p>
+</details>
+<details>
+<summary>
+Scenario 4 (multi-coil)
+</summary>
+<table class="table">
+<thead>
+<tr class="header">
+<th>#</th>
+<th><strong>Loss</strong></th>
+<th><strong>PSNR</strong></th>
+<th><strong>SSIM</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>UAIR</td>
+<td>15.26</td>
+<td>.3453</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Adversarial</td>
+<td>17.47</td>
+<td>.6464</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>VORTEX</td>
+<td>23.59</td>
+<td>.5846</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Zero-filled</td>
+<td>27.82</td>
+<td>.7988</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>MC</td>
+<td>28.96</td>
+<td>.8271</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Noise2Inverse</td>
+<td>30.93</td>
+<td>.8589</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>MOI</td>
+<td>31.37</td>
+<td>.8810</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>SSDU</td>
+<td>31.47</td>
+<td>.8705</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>MO-EI</td>
+<td>31.56</td>
+<td>.8836</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>EI</td>
+<td>31.66</td>
+<td>.8769</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>MOC-SSDU</td>
+<td>31.80</td>
+<td>.8761</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>SSDU-Consistency</td>
+<td>32.30</td>
+<td>.8949</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>Weighted-SSDU</td>
+<td>33.03</td>
+<td>.8991</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>(Supervised)</td>
+<td>33.89</td>
+<td>.9147</td>
+</tr>
+</tbody>
+</table>
+<p><img src="img/results_brain_multicoil.png" class="img-fluid"></p>
+</details>
+<hr>
+</section>
+<section id="training-script-step-by-step" class="level2">
+<h2 class="anchored" data-anchor-id="training-script-step-by-step">Training script step-by-step</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="https://colab.research.google.com/drive/15CFQ7Lp9Xk-J3ltJ6kWHIs5tk8Z4VBYD?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+<p>The training script makes extensive use of modular training framework provided by <a href="https://deepinv.github.io">DeepInverse</a>.</p>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> deepinv <span class="im">as</span> dinv</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define training parameters:</p>
+<div class="cell" data-execution_count="2">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> dinv.utils.get_freer_gpu() <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>torch.cuda.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> torch.Generator(device<span class="op">=</span>device).manual_seed(<span class="dv">0</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>rng_cpu <span class="op">=</span> torch.Generator(device<span class="op">=</span><span class="st">"cpu"</span>).manual_seed(<span class="dv">0</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>acceleration <span class="op">=</span> <span class="dv">6</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>batch_size <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">1e-3</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>img_size <span class="op">=</span> (<span class="dv">320</span>, <span class="dv">320</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> args: <span class="co"># Command line args from train.py</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    physics <span class="op">=</span> <span class="st">"mri"</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    epochs <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> <span class="st">"mc"</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    ckpt <span class="op">=</span> <span class="va">None</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define MRI physics <span class="math inline">\(A\)</span> and mask generator <span class="math inline">\(M\)</span> according to scenario</p>
+<div class="cell" data-execution_count="3">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>physics_generator <span class="op">=</span> dinv.physics.generator.GaussianMaskGenerator(img_size<span class="op">=</span>img_size, acceleration<span class="op">=</span>acceleration, rng<span class="op">=</span>rng, device<span class="op">=</span>device)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>physics <span class="op">=</span> dinv.physics.MRI(img_size<span class="op">=</span>img_size, device<span class="op">=</span>device)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="cf">match</span> args.physics:</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">"noisy"</span>:</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        sigma <span class="op">=</span> <span class="fl">0.1</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        physics.noise_model <span class="op">=</span> dinv.physics.GaussianNoise(sigma, rng<span class="op">=</span>rng)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">"multicoil"</span>:</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        physics <span class="op">=</span> dinv.physics.MultiCoilMRI(img_size<span class="op">=</span>img_size, coil_maps<span class="op">=</span><span class="dv">4</span>, device<span class="op">=</span>device)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">"single"</span>:</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        physics.update(<span class="op">**</span>physics_generator.step())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define model <span class="math inline">\(f_\theta\)</span></p>
+<div class="cell" data-execution_count="4">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>denoiser <span class="op">=</span> dinv.models.UNet(<span class="dv">2</span>, <span class="dv">2</span>, scales<span class="op">=</span><span class="dv">4</span>, batch_norm<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> dinv.models.MoDL(denoiser<span class="op">=</span>denoiser, num_iter<span class="op">=</span><span class="dv">3</span>).to(device)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define dataset</p>
+<div class="cell" data-execution_count="5">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>dataset <span class="op">=</span> dinv.datasets.SimpleFastMRISliceDataset(<span class="st">"data"</span>, file_name<span class="op">=</span><span class="st">"fastmri_brain_singlecoil.pt"</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>train_dataset, test_dataset <span class="op">=</span> torch.utils.data.random_split(dataset, (<span class="fl">0.8</span>, <span class="fl">0.2</span>), generator<span class="op">=</span>rng_cpu)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Simulate and save random measurements</p>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>dataset_path <span class="op">=</span> dinv.datasets.generate_dataset(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    train_dataset<span class="op">=</span>train_dataset,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    test_dataset<span class="op">=</span>test_dataset,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    physics<span class="op">=</span>physics,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    physics_generator<span class="op">=</span>physics_generator <span class="cf">if</span> args.physics <span class="op">!=</span> <span class="st">"single"</span> <span class="cf">else</span> <span class="va">None</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    save_physics_generator_params<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    overwrite_existing<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    device<span class="op">=</span>device,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    save_dir<span class="op">=</span><span class="st">"data"</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    batch_size<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    dataset_filename<span class="op">=</span><span class="st">"dataset_"</span> <span class="op">+</span> args.physics</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>train_dataset <span class="op">=</span> dinv.datasets.HDF5Dataset(dataset_path, split<span class="op">=</span><span class="st">"train"</span>, load_physics_generator_params<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>test_dataset  <span class="op">=</span> dinv.datasets.HDF5Dataset(dataset_path, split<span class="op">=</span><span class="st">"test"</span>,  load_physics_generator_params<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>train_dataloader <span class="op">=</span> torch.utils.data.DataLoader(train_dataset, batch_size<span class="op">=</span>batch_size, shuffle<span class="op">=</span><span class="va">True</span>, generator<span class="op">=</span>rng_cpu)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>test_dataloader  <span class="op">=</span> torch.utils.data.DataLoader(test_dataset,  batch_size<span class="op">=</span>batch_size)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define loss function (see <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> for all options)</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">match</span> args.loss:</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">"mc"</span>:</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>        loss <span class="op">=</span> dinv.loss.MCLoss()</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="st">"..."</span>:</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Add your custom loss here!</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">pass</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define metrics</p>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>metrics <span class="op">=</span> [</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    dinv.metric.PSNR(complex_abs<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    dinv.metric.SSIM(complex_abs<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Define trainer</p>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>trainer <span class="op">=</span> dinv.Trainer(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> model,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    physics <span class="op">=</span> physics,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    optimizer <span class="op">=</span> torch.optim.Adam(model.parameters(), lr<span class="op">=</span>lr),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    train_dataloader <span class="op">=</span> train_dataloader,</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    eval_dataloader <span class="op">=</span> test_dataloader,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    epochs <span class="op">=</span> args.epochs,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> loss,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    metrics <span class="op">=</span> metrics,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    device <span class="op">=</span> device,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    ckpt_pretrained<span class="op">=</span>args.ckpt,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="10">
+<details>
+<summary>Define additional adversarial trainer (if needed)</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> args.loss <span class="kw">in</span> (<span class="st">"uair"</span>, <span class="st">"adversarial"</span>):</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    trainer <span class="op">=</span> dinv.training.AdversarialTrainer(</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>        model <span class="op">=</span> model,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        physics <span class="op">=</span> physics,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>        optimizer <span class="op">=</span> dinv.training.AdversarialOptimizer(</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>            torch.optim.Adam(model.parameters(), lr<span class="op">=</span>lr), </span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>            torch.optim.Adam(discrim.parameters(), lr<span class="op">=</span>lr)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>        train_dataloader <span class="op">=</span> train_dataloader,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>        eval_dataloader <span class="op">=</span> test_dataloader,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>        epochs <span class="op">=</span> args.epochs,</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>        losses <span class="op">=</span> loss,</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>        metrics <span class="op">=</span> metrics,</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>        device <span class="op">=</span> device,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>        ckpt_pretrained<span class="op">=</span>args.ckpt,</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    trainer.D <span class="op">=</span> discrim</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    trainer.losses_d <span class="op">=</span> loss_d</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Train or evaluate!</p>
+<div class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>trainer.train()</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(trainer.test(test_dataloader))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="dataset-preparation-instructions" class="level1">
+<h1>Dataset preparation instructions</h1>
+<p>To prepare the fastMRI dataset <code>fastmri_brain_singlecoil.pt</code> used in <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a> for the benchmark experiments, we make use of the <a href="https://deepinv.github.io/deepinv/api/stubs/deepinv.datasets.FastMRISliceDataset.html">fastMRI wrapper in DeepInverse</a>.</p>
+<ol type="1">
+<li>Download <a href="https://fastmri.med.nyu.edu/">fastMRI</a> brain dataset batch 0: <code>brain_multicoil_train_batch_0</code> (~98.5 GB)</li>
+<li>Generate an efficient dataset of the middle slices (note that this is deterministic, and the random masks &amp; noise are simulated in <a href="https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py"><code>train.py</code></a>):</li>
+</ol>
+<div class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>dataset <span class="op">=</span> deepinv.datasets.FastMRISliceDataset(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"/path/to/fastmri/brain/multicoil_train"</span>, </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    slice_index<span class="op">=</span><span class="st">"middle"</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>dataset.save_simple_dataset(<span class="st">"data/fastmri_brain_singlecoil.pt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
