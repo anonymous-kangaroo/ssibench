@@ -251,7 +251,6 @@ We provide a live leaderboard for each experimental scenario described in [the p
 ---
 
 ## Training script step-by-step
-[![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15CFQ7Lp9Xk-J3ltJ6kWHIs5tk8Z4VBYD?usp=sharing)
 
 The training script makes extensive use of modular training framework provided by [DeepInverse](https://deepinv.github.io).
 
