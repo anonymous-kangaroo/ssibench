@@ -63,7 +63,7 @@ Then run [`train.py`](https://github.com/anonymous-kangaroo/ssibench/blob/main/t
 python train.py --loss ... --physics ...
 ```
 
-To evaluate, use the same script [`train.py`](https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py) with 0 epochs and loading a checkpoint. We provide one pretrained model for quick eval ([download here](https://huggingface.co/Andrewwango/ssibench/blob/main/demo_mo-ei.pth.tar)):
+To evaluate, use the same script [`train.py`](https://github.com/anonymous-kangaroo/ssibench/blob/main/train.py) with 0 epochs and loading a checkpoint. We provide one pretrained model for quick eval:
 
 ```bash
 python train.py --epochs 0 --ckpt "demo_mo-ei.pth.tar"
@@ -416,3 +416,4 @@ dataset = deepinv.datasets.FastMRISliceDataset(
 
 dataset.save_simple_dataset("data/fastmri_brain_singlecoil.pt")
 ```
+
